@@ -1,2 +1,2 @@
 # ToDoPy
-Just a todo list. Started it to learn some PySide6.
+Just a todo list. Started to programm it to learn some PySide6.
