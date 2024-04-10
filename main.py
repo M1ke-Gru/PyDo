@@ -48,8 +48,6 @@ class MainWindow(QMainWindow):
         top_bar.addWidget(self.plusButton)
         self.windowlayout.addLayout(top_bar)
         self.tododonelayout = QHBoxLayout()
-        self.show_todo()
-        self.show_done()
         self.change_todo_done_visibility()
         self.windowlayout.addLayout(self.tododonelayout)
 
@@ -60,33 +58,12 @@ class MainWindow(QMainWindow):
             widget = item.widget()
             if widget:
                 widget.deleteLater()
-        if self.displaytodoordone == 0:
-            self.show_todo()
-            self.show_done()
-        elif self.displaytodoordone == 1:
-            self.show_todo()
-        elif self.displaytodoordone == 2:
-            self.show_done()
-
-    def show_todo(self):
-        if not hasattr(self, "labeltodo"):
-            self.labeltodo = QLabel("To do")
-        self.todoListWidget = QListWidget()
-
-        todolayout = QVBoxLayout()
-        todolayout.addWidget(self.labeltodo)
-        todolayout.addWidget(self.todoListWidget)
-        self.tododonelayout.addLayout(todolayout)
-
-    def show_done(self):
-        if not hasattr(self, "labeldone"):
-            self.labeldone = QLabel("Done")
-        self.doneListWidget = QListWidget()
-
-        donelayout = QVBoxLayout()
-        donelayout.addWidget(self.labeldone)
-        donelayout.addWidget(self.doneListWidget)
-        self.tododonelayout.addLayout(donelayout)
+        self.tasklistwidget = QListWidget()
+        self.tododonelayout.addWidget(self.tasklistwidget)
+        if self.displaytodoordone < 2:
+            self.showTasksOnLists(todo)
+        if self.displaytodoordone % 2 == 0:
+            self.showTasksOnLists(done)
 
     def clearLayout(self):
         while self.windowlayout.count() > 0:
@@ -99,17 +76,12 @@ class MainWindow(QMainWindow):
         task = Task()
         todo.append(task)
         print(todo)
-        self.updateLists()
+        self.change_todo_done_visibility()
 
-    def updateLists(self):
-        self.todoListWidget.clear()
-        self.doneListWidget.clear()
-        for task in todo:
-            item = TaskWidget(task, self.todoListWidget, self)
-            self.todoListWidget.addItem(item)
-        for task in done:
-            item = TaskWidget(task, self.doneListWidget, self)
-            self.doneListWidget.addItem(item)
+    def showTasksOnLists(self, tasklist):
+        for task in tasklist:
+            item = TaskWidget(task, self.tasklistwidget, self)
+            self.tasklistwidget.addItem(item)
 
 
 class Task:
@@ -158,7 +130,7 @@ class TaskWidget(QListWidgetItem):
             done.remove(self.task)
             todo.append(self.task)
             self.task.isDone = False
-        self.window.updateLists()
+        self.window.change_todo_done_visibility()
 
 
 app = QApplication(sys.argv)
