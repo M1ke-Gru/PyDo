@@ -1,9 +1,23 @@
 import sys
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QListWidget, QListWidgetItem, QLineEdit, QCheckBox, QComboBox
+from PySide6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QListWidget,
+    QListWidgetItem,
+    QLineEdit,
+    QCheckBox,
+    QComboBox,
+)
 
 todo = []
 done = []
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -11,7 +25,6 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("PyDo")
         self.justLaunched = True
         self.show_UI()
-
 
     def show_UI(self):
         if not self.justLaunched:
@@ -28,7 +41,9 @@ class MainWindow(QMainWindow):
         top_bar = QHBoxLayout()
         self.choicetodoordoneshown = QComboBox()
         self.choicetodoordoneshown.addItems(["Todo & done", "Todo", "Done"])
-        self.choicetodoordoneshown.currentIndexChanged.connect(self.change_todo_done_visibility)
+        self.choicetodoordoneshown.currentIndexChanged.connect(
+            self.change_todo_done_visibility
+        )
         top_bar.addWidget(self.choicetodoordoneshown)
         top_bar.addWidget(self.plusButton)
         self.windowlayout.addLayout(top_bar)
@@ -54,14 +69,9 @@ class MainWindow(QMainWindow):
             self.show_done()
 
     def show_todo(self):
-        if not hasattr(self, 'labeltodo'):
+        if not hasattr(self, "labeltodo"):
             self.labeltodo = QLabel("To do")
         self.todoListWidget = QListWidget()
-
-        self.showtodobox = QCheckBox("Show pending")
-        self.showtodobox.setCheckState(Qt.CheckState.Checked)
-        self.showtodobox.stateChanged.connect(lambda state: self.show_list(self.showtodo))
-        self.showtodo = True
 
         todolayout = QVBoxLayout()
         todolayout.addWidget(self.labeltodo)
@@ -69,12 +79,10 @@ class MainWindow(QMainWindow):
         self.tododonelayout.addLayout(todolayout)
 
     def show_done(self):
-        if not hasattr(self, 'labeldone'):
+        if not hasattr(self, "labeldone"):
             self.labeldone = QLabel("Done")
         self.doneListWidget = QListWidget()
-        self.showdonebox = QCheckBox("Show completed")        
-        self.showdonebox.stateChanged.connect(lambda state: self.show_list(self.showdone))
-        self.showdone = False
+
         donelayout = QVBoxLayout()
         donelayout.addWidget(self.labeldone)
         donelayout.addWidget(self.doneListWidget)
@@ -86,9 +94,6 @@ class MainWindow(QMainWindow):
             widget = item.widget()
             if widget:
                 widget.deleteLater()
-        
-    def show_list(self, todoordone):
-        todoordone = not todoordone
 
     def addTask(self):
         task = Task()
@@ -104,7 +109,8 @@ class MainWindow(QMainWindow):
             self.todoListWidget.addItem(item)
         for task in done:
             item = TaskWidget(task, self.doneListWidget, self)
-            self.doneListWidget.addItem(item)            
+            self.doneListWidget.addItem(item)
+
 
 class Task:
     def __init__(self):
@@ -121,24 +127,30 @@ class TaskWidget(QListWidgetItem):
 
         self.check = QCheckBox()
         self.check.stateChanged.connect(self.taskDoneStateChange)
-        self.name = QLineEdit(self.task.text)
-        self.name.textChanged.connect(self.text_changed)
+        if (self.task.isDone == False):
+            self.name = QLineEdit(self.task.text)
+            self.name.textChanged.connect(self.text_changed)
+        else:
+            self.name = QLabel()
+            self.name.setText(self.task.text)
+            self.name.setStyleSheet("text-decoration: line-through; color: #999999; margin-right: 200px; padding-top: 2px;")
 
         widget = QWidget()
 
         self.tasklayout = QHBoxLayout(widget)
+        self.tasklayout.setAlignment(Qt.AlignLeft)
         self.tasklayout.addWidget(self.check)
         self.tasklayout.addWidget(self.name)
-
+        self.name.setAlignment(Qt.AlignLeft)
         self.setSizeHint(widget.sizeHint())
         self.listwidget.addItem(self)
-        self.listwidget.setItemWidget(self, widget)  
+        self.listwidget.setItemWidget(self, widget)
 
     def text_changed(self, text):
         self.task.text = text
 
     def taskDoneStateChange(self, state):
-        if self.task.isDone == False:
+        if not self.task.isDone:
             todo.remove(self.task)
             done.append(self.task)
             self.task.isDone = True
@@ -147,6 +159,7 @@ class TaskWidget(QListWidgetItem):
             todo.append(self.task)
             self.task.isDone = False
         self.window.updateLists()
+
 
 app = QApplication(sys.argv)
 window = MainWindow()
