@@ -84,18 +84,22 @@ class MainWindow(QMainWindow):
             self.tasklistwidget.addItem(item)
 
     def show_task_settings(self, task):
-        self.taskSettingsWindow = TaskSettingsWindow(task)
+        self.taskSettingsWindow = TaskSettingsWindow(task, self)
         self.taskSettingsWindow.show()
 
 
 class TaskSettingsWindow(QWidget):
-    def __init__(self, task):
+    def __init__(self, task, parentWindow):
         super().__init__()
+        self.task = Task()
         self.task = task
+        self.parentWindow = MainWindow()
+        self.parentWindow = parentWindow
         self.tasksettingslayout = QVBoxLayout()
         self.show_name_editor()
         self.show_date_editor()
         self.show_importance_and_urgency_toggles()
+        self.show_ok_button()
         self.setLayout(self.tasksettingslayout)
 
     def show_name_editor(self):
@@ -105,7 +109,7 @@ class TaskSettingsWindow(QWidget):
         self.nameeditorlayout.addWidget(self.nameeditorlabel)
         self.nameeditorlayout.addWidget(self.nameeditorfield)
         self.tasksettingslayout.addLayout(self.nameeditorlayout)
-    
+
     def show_date_editor(self):
         self.dateeditorlabel = QLabel("Time")
         self.dateeditorfield = QLineEdit("dd/mm/yy")
@@ -117,16 +121,34 @@ class TaskSettingsWindow(QWidget):
     def show_importance_and_urgency_toggles(self):
         self.importanceeditorlabel = QLabel("Importance")
         self.importanceeditorfield = QComboBox()
-        self.importanceeditorfield.addItems(["High", "Medium", "Low"])
+        self.importanceeditorfield.addItems(self.task.importanceList)
         self.urgencyeditorlabel = QLabel("Urgency")
         self.urgencyeditorfield = QComboBox()
-        self.urgencyeditorfield.addItems(["High", "Medium", "Low"])
+        self.urgencyeditorfield.addItems(self.task.urgencyList)
         self.importanceandurgencylayout = QHBoxLayout()
         self.importanceandurgencylayout.addWidget(self.importanceeditorlabel)
         self.importanceandurgencylayout.addWidget(self.importanceeditorfield)
         self.importanceandurgencylayout.addWidget(self.urgencyeditorlabel)
         self.importanceandurgencylayout.addWidget(self.urgencyeditorfield)
         self.tasksettingslayout.addLayout(self.importanceandurgencylayout)
+
+    def show_ok_button(self):
+        self.ok_button = QPushButton("OK")
+        self.buttonLayout = QHBoxLayout()
+        self.buttonLayout.addWidget(self.ok_button)
+        self.tasksettingslayout.addLayout(self.buttonLayout)
+        self.ok_button.clicked.connect(self.save_changes)
+
+    def save_changes(self):
+        self.task.text = self.nameeditorfield.text()
+        self.task.taskDate = self.dateeditorfield.text()
+        self.task.importance = self.task.importanceList[
+            self.importanceeditorfield.currentIndex()
+        ]
+        self.task.urgency = self.task.urgencyList[
+            self.urgencyeditorfield.currentIndex()
+        ]
+        self.parentWindow.change_todo_done_visibility()
 
 
 class Task:
@@ -138,7 +160,8 @@ class Task:
         self.importanceList = ["High", "Medium", "Low"]
         self.importance = self.importanceList[2]
         self.urgencyList = ["High", "Medium", "Low"]
-    
+        self.urgency = self.urgencyList[2]
+
 
 class TaskWidget(QListWidgetItem):
     def __init__(self, task, listwidget, window):
@@ -149,15 +172,19 @@ class TaskWidget(QListWidgetItem):
 
         self.check = QCheckBox()
         self.check.stateChanged.connect(self.task_done_state_change)
-        if (self.task.isDone == False):
+        if self.task.isDone == False:
             self.name = QLineEdit(self.task.text)
             self.name.textChanged.connect(self.text_changed)
             self.burgermenubutton = QPushButton("☰")
-            self.burgermenubutton.clicked.connect(lambda: self.window.show_task_settings(self.task))
+            self.burgermenubutton.clicked.connect(
+                lambda: self.window.show_task_settings(self.task)
+            )
         else:
             self.name = QLabel()
             self.name.setText(self.task.text)
-            self.name.setStyleSheet("text-decoration: line-through; color: #999999; margin-right: 200px; padding-top: 2px;")
+            self.name.setStyleSheet(
+                "text-decoration: line-through; color: #999999; margin-right: 200px; padding-top: 2px;"
+            )
 
         widget = QWidget()
 
